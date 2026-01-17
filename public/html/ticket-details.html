@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ticket Details - Carbochem Helpdesk</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary-color: #1a5f9e;
+      --secondary-color: #2c7cc4;
+      --background-light: #f0f4f8;
+      --text-dark: #1f2937;
+      --text-gray: #4b5563;
+      --white: #ffffff;
+      --border-color: #d1d5db;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      margin: 0;
+    }
+
+    .navbar {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      padding: 1rem 2rem;
+      color: white;
+    }
+
+    .navbar-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-image {
+      width: 40px;
+      height: 40px;
+      background-color: white;
+      color: var(--primary-color);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      margin-right: 12px;
+    }
+
+    .brand-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .page-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .page-header h2 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .back-btn {
+      padding: 8px 16px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-btn:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .ticket-details {
+      background-color: var(--white);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .detail-item {
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-item:last-child {
+      border-bottom: none;
+    }
+
+    .detail-item label {
+      font-weight: 600;
+      color: var(--text-gray);
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-item .value {
+      font-size: 16px;
+      color: var(--text-dark);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-open {
+      background-color: #e6f2ff;
+      color: #1e3a8a;
+    }
+
+    .status-in-progress {
+      background-color: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-resolved {
+      background-color: #ddf4e4;
+      color: #166534;
+    }
+
+    .priority-high {
+      color: #ea580c;
+      font-weight: bold;
+    }
+
+    .priority-medium {
+      color: #0369a1;
+      font-weight: bold;
+    }
+
+    .priority-low {
+      color: #4b5563;
+      font-weight: bold;
+    }
+
+    .priority-critical {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    .file-link {
+      display: inline-block;
+      margin-right: 10px;
+      margin-top: 5px;
+      padding: 8px 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .file-link:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      color: var(--text-gray);
+    }
+
+    .error {
+      background-color: #fee;
+      border: 1px solid #fcc;
+      color: #c00;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-brand">
+        <div class="logo-image">CC</div>
+        <span class="brand-name">Carbochem Helpdesk</span>
+      </div>
+      <div class="user-info">
+        <span id="dashboard-name">Dashboard</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h2>Ticket Details</h2>
+      <a href="#" class="back-btn" id="back-btn">← Back</a>
+    </div>
+
+    <div id="loading" class="loading">Loading ticket details...</div>
+    <div id="error-message" class="error" style="display: none;"></div>
+
+    <div class="ticket-details" id="ticket-details" style="display: none;">
+      <div class="detail-item">
+        <label>Ticket ID</label>
+        <div class="value" id="ticket-id"></div>
+      </div>
+      <div class="detail-item">
+        <label>Customer Name</label>
+        <div class="value" id="customer-name"></div>
+      </div>
+      <div class="detail-item">
+        <label>Created Date & Time</label>
+        <div class="value" id="created-date"></div>
+      </div>
+      <div class="detail-item">
+        <label>Issue Title</label>
+        <div class="value" id="issue-title"></div>
+      </div>
+      <div class="detail-item">
+        <label>Status</label>
+        <div class="value" id="status"></div>
+      </div>
+      <div class="detail-item">
+        <label>Category</label>
+        <div class="value" id="category"></div>
+      </div>
+      <div class="detail-item">
+        <label>Priority</label>
+        <div class="value" id="priority"></div>
+      </div>
+      <div class="detail-item">
+        <label>Description</label>
+        <div class="value" id="description"></div>
+      </div>
+      <div class="detail-item" id="email-section">
+        <label>Email</label>
+        <div class="value" id="email"></div>
+      </div>
+      <div class="detail-item" id="mobile-section">
+        <label>Mobile</label>
+        <div class="value" id="mobile"></div>
+      </div>
+      <div class="detail-item" id="assigned-section" style="display: none;">
+        <label>Assigned To</label>
+        <div class="value" id="assigned-to"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    // Check authentication
+    if (!localStorage.getItem('token')) {
+      window.location.href = 'index.html';
+    }
+
+    // Get ticket ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const ticketId = urlParams.get('id');
+
+    // Set dashboard name based on role
+    const userRole = localStorage.getItem('userRole');
+    const dashboardNames = {
+      admin: 'Admin Dashboard',
+      staff: 'Staff Dashboard',
+      client: 'Consumer Dashboard'
+    };
+    document.getElementById('dashboard-name').textContent = dashboardNames[userRole] || 'Dashboard';
+
+    // Set back button
+    const backUrls = {
+      admin: 'admin.html',
+      staff: 'staff.html',
+      client: 'client.html'
+    };
+    document.getElementById('back-btn').href = backUrls[userRole] || 'index.html';
+
+    if (!ticketId) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-message').textContent = 'No ticket ID provided';
+      document.getElementById('error-message').style.display = 'block';
+    } else {
+      loadTicketDetails(ticketId);
+    }
+
+    async function loadTicketDetails(id) {
+      try {
+        const result = await API.getTickets();
+        
+        if (result.success) {
+          const ticket = result.tickets.find(t => t.id.toString() === id);
+          
+          if (ticket) {
+            displayTicketDetails(ticket);
+          } else {
+            showError('Ticket not found');
+          }
+        } else {
+          showError('Failed to load ticket details');
+        }
+      } catch (error) {
+        console.error('Error loading ticket:', error);
+        showError('An error occurred while loading ticket details');
+      }
+    }
+
+    function displayTicketDetails(ticket) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('ticket-details').style.display = 'block';
+
+      // Populate fields
+      document.getElementById('ticket-id').textContent = '#' + ticket.id;
+      document.getElementById('customer-name').textContent = ticket.customerName || 'N/A';
+      document.getElementById('created-date').textContent = formatDateTime(ticket.createdAt);
+      document.getElementById('issue-title').textContent = ticket.title;
+      
+      // Status with badge
+      const statusClass = ticket.status.toLowerCase().replace(' ', '-');
+      document.getElementById('status').innerHTML = `<span class="status-badge status-${statusClass}">${ticket.status}</span>`;
+      
+      document.getElementById('category').textContent = ticket.category || 'N/A';
+      
+      // Priority with color
+      const priorityClass = `priority-${ticket.priority.toLowerCase()}`;
+      document.getElementById('priority').innerHTML = `<span class="${priorityClass}">${ticket.priority}</span>`;
+      
+      document.getElementById('description').textContent = ticket.description || 'No description provided';
+      document.getElementById('email').textContent = ticket.email || 'N/A';
+      document.getElementById('mobile').textContent = ticket.mobile || 'N/A';
+
+      // Show assigned to if exists
+      if (ticket.assignedTo) {
+        document.getElementById('assigned-section').style.display = 'block';
+        document.getElementById('assigned-to').textContent = ticket.assignedTo;
+      }
+    }
+
+    function formatDateTime(dateString) {
+      const date = new Date(dateString);
+      const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return date.toLocaleDateString('en-US', options);
+    }
+
+    function showError(message) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-message').textContent = message;
+      document.getElementById('error-message').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

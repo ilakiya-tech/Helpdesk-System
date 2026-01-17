@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbochem Helpdesk - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a5f9e;
+            --secondary-color: #2c7cc4;
+            --background-light: #f0f4f8;
+            --text-dark: #1f2937;
+            --text-gray: #4b5563;
+            --white: #ffffff;
+            --border-color: #d1d5db;
+            --error-color: #ef4444;
+            --success-color: #10b981;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 20px;
+        }
+        
+        .login-container {
+            display: flex;
+            background: var(--white);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .login-banner {
+            background-color: var(--primary-color);
+            width: 30%;
+            min-width: 200px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+            background-image: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        .login-banner h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .login-banner p {
+            font-size: 14px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        
+        .login-form {
+            flex: 1;
+            padding: 40px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-image {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            overflow: hidden;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        .form-title {
+            margin-bottom: 30px;
+        }
+        
+        .form-title h3 {
+            font-size: 24px;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .form-title p {
+            color: var(--text-gray);
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .login-button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .login-button:disabled {
+            background-color: var(--text-gray);
+            cursor: not-allowed;
+        }
+        
+        .user-toggle {
+            display: flex;
+            margin-bottom: 30px;
+            background-color: var(--background-light);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .user-type {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: var(--text-gray);
+        }
+        
+        .user-type.active {
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            font-size: 14px;
+            margin-top: 4px;
+            display: none;
+        }
+        
+        .login-feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .login-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+        
+        .login-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+            }
+            
+            .login-banner {
+                width: 100%;
+                padding: 25px;
+            }
+            
+            .login-form {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="login-banner">
+                <h1>Carbochem Helpdesk</h1>
+                <p>Access your tickets and get support for all your construction project needs.</p>
+            </div>
+            <div class="login-form">
+                <div class="logo">
+                    <div class="logo-image">CC</div>
+                    <h2 class="company-name">Carbochem</h2>
+                </div>
+                <div class="form-title">
+                    <h3>Login to your account</h3>
+                    <p>Please select your user type and enter your credentials</p>
+                </div>
+                
+                <div class="user-toggle">
+                    <div class="user-type active" id="admin-toggle">Admin</div>
+                    <div class="user-type" id="field-toggle">Field Staff</div>
+                    <div class="user-type" id="consumer-toggle">Consumer</div>
+                </div>
+                
+                <form id="login-form">
+                    <input type="hidden" id="user-type" name="userType" value="admin">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                        <div class="error-message" id="username-error">Please enter a valid username</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                        <div class="error-message" id="password-error">Password must be at least 6 characters</div>
+                    </div>
+                    
+                    <button type="submit" class="login-button">Login</button>
+                    
+                    <div id="login-feedback" class="login-feedback"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const adminToggle = document.getElementById('admin-toggle');
+        const fieldToggle = document.getElementById('field-toggle');
+        const consumerToggle = document.getElementById('consumer-toggle');
+        const userTypeInput = document.getElementById('user-type');
+        const loginForm = document.getElementById('login-form');
+        const loginFeedback = document.getElementById('login-feedback');
+        const loginButton = loginForm.querySelector('button[type="submit"]');
+        
+        let currentUserType = 'admin';
+        
+        // Dashboard URLs for each user type
+        const dashboardUrls = {
+            admin: 'admin.html',
+            field: 'staff.html',
+            consumer: 'client.html'
+        };
+        
+        // Role mapping for backend
+        const roleMapping = {
+            'admin': 'admin',
+            'field': 'staff',
+            'consumer': 'client'
+        };
+        
+        adminToggle.addEventListener('click', () => setActiveUserType('admin'));
+        fieldToggle.addEventListener('click', () => setActiveUserType('field'));
+        consumerToggle.addEventListener('click', () => setActiveUserType('consumer'));
+        
+        function setActiveUserType(type) {
+            adminToggle.classList.remove('active');
+            fieldToggle.classList.remove('active');
+            consumerToggle.classList.remove('active');
+            
+            if (type === 'admin') {
+                adminToggle.classList.add('active');
+            } else if (type === 'field') {
+                fieldToggle.classList.add('active');
+            } else if (type === 'consumer') {
+                consumerToggle.classList.add('active');
+            }
+            
+            userTypeInput.value = type;
+            currentUserType = type;
+        }
+        
+        function showFeedback(message, isSuccess) {
+            loginFeedback.textContent = message;
+            loginFeedback.style.display = 'block';
+            loginFeedback.className = isSuccess ? 'login-feedback login-success' : 'login-feedback login-error';
+        }
+        
+        function clearFeedback() {
+            loginFeedback.style.display = 'none';
+            loginFeedback.textContent = '';
+        }
+        
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            let isValid = true;
+            
+            document.getElementById('username-error').style.display = 'none';
+            document.getElementById('password-error').style.display = 'none';
+            clearFeedback();
+            
+            if (!username || username.length < 3) {
+                document.getElementById('username-error').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!password || password.length < 6) {
+                document.getElementById('password-error').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                await authenticateUser(username, password, currentUserType);
+            }
+        });
+        
+        async function authenticateUser(username, password, userType) {
+            loginButton.disabled = true;
+            loginButton.textContent = 'Authenticating...';
+            showFeedback('Authenticating...', true);
+            
+            try {
+                const isAuthenticated = await mockAuthCheck(username, password, userType);
+                
+                if (isAuthenticated) {
+                    showFeedback(`Login successful as ${userType}`, true);
+                    setTimeout(() => {
+                        redirectToDashboard(userType);
+                    }, 1000);
+                } else {
+                    showFeedback('Invalid username or password', false);
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Login';
+                }
+            } catch (error) {
+                showFeedback('Login failed. Please try again.', false);
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+            }
+        }
+        
+        // FIXED: Removed 'role' from request body - backend only expects username and password
+        async function mockAuthCheck(username, password, userType) {
+            try {
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username, 
+                        password
+                        // Removed: role parameter - backend doesn't expect it
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Login response:', result); // Debug log
+                
+                if (result.success) {
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('userRole', result.user.role);
+                    localStorage.setItem('username', result.user.username);
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Login error:', error);
+                return false;
+            }
+        }
+        
+        function redirectToDashboard(userType) {
+            const redirectUrl = dashboardUrls[userType];
+            
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                showFeedback('Dashboard URL not found', false);
+            }
+        }
+    </script>
+</body>
+</html>
