@@ -1,172 +1,97 @@
+// api.js  –  Carbochem Helpdesk Frontend API Client
+// Talks directly to the C backend on port 9090
+
 const API = {
-    // Base URL for API calls
-    baseURL: '/api',
+    baseURL: 'http://localhost:9090/api',
 
-    // Get auth token from localStorage
-    getToken() {
-        return localStorage.getItem('token');
+    getToken()    { return localStorage.getItem('token'); },
+    getUsername() { return localStorage.getItem('username'); },
+    getRole()     { return localStorage.getItem('userRole'); },
+
+    _headers(withAuth = true) {
+        const h = { 'Content-Type': 'application/json' };
+        if (withAuth) h['Authorization'] = `Bearer ${this.getToken()}`;
+        return h;
     },
 
-    // FIXED: Removed 'role' parameter - backend doesn't need it
+    async _fetch(path, opts = {}) {
+        try {
+            const resp = await fetch(`${this.baseURL}${path}`, opts);
+            return await resp.json();
+        } catch (err) {
+            console.error(`API error [${path}]:`, err);
+            return { success: false, message: 'Network error – is the C server running on port 9090?' };
+        }
+    },
+
+    /* ── Auth ─────────────────────────────────────────────────── */
     async login(username, password) {
-        try {
-            const response = await fetch(`${this.baseURL}/auth`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Login error:', error);
-            return { success: false, message: 'Login failed' };
-        }
+        return this._fetch('/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
     },
 
-    // Register new user
     async registerUser(username, password, role) {
-        try {
-            const response = await fetch(`${this.baseURL}/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getToken()}`
-                },
-                body: JSON.stringify({ username, password, role })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Register error:', error);
-            return { success: false, message: 'Registration failed' };
-        }
+        return this._fetch('/register', {
+            method: 'POST',
+            headers: this._headers(),
+            body: JSON.stringify({ username, password, role })
+        });
     },
 
-    // Get all tickets
+    /* ── Tickets ──────────────────────────────────────────────── */
     async getTickets() {
-        try {
-            const response = await fetch(`${this.baseURL}/tickets`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Get tickets error:', error);
-            return { success: false, message: 'Failed to fetch tickets' };
-        }
+        return this._fetch('/tickets', { headers: this._headers() });
     },
 
-    // Get user's tickets only
     async getMyTickets() {
-        try {
-            const response = await fetch(`${this.baseURL}/mytickets`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Get my tickets error:', error);
-            return { success: false, message: 'Failed to fetch tickets' };
-        }
+        return this._fetch('/mytickets', { headers: this._headers() });
     },
 
-    // Create new ticket
-    async createTicket(title, description, priority = 'Medium', category = 'General', customerName = '', email = '', mobile = '') {
-        try {
-            const response = await fetch(`${this.baseURL}/tickets`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getToken()}`
-                },
-                body: JSON.stringify({
-                    title,
-                    description,
-                    priority,
-                    category,
-                    customerName,
-                    email,
-                    mobile
-                })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Create ticket error:', error);
-            return { success: false, message: 'Failed to create ticket' };
-        }
+    async getAssigned() {
+        return this._fetch('/assigned', { headers: this._headers() });
     },
 
-    // Update ticket status
-    async updateTicketStatus(ticketId, status) {
-        try {
-            const response = await fetch(`${this.baseURL}/tickets/${ticketId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getToken()}`
-                },
-                body: JSON.stringify({ status })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Update status error:', error);
-            return { success: false, message: 'Failed to update status' };
-        }
-    },
-
-    // Assign ticket to staff
-    async assignTicket(ticketId, staffUsername) {
-        try {
-            const response = await fetch(`${this.baseURL}/tickets/${ticketId}/assign`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getToken()}`
-                },
-                body: JSON.stringify({ staffUsername })
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Assign ticket error:', error);
-            return { success: false, message: 'Failed to assign ticket' };
-        }
-    },
-
-    // Get ticket by ID
     async getTicketById(ticketId) {
-        try {
-            const result = await this.getTickets();
-            if (result.success) {
-                const ticket = result.tickets.find(t => t.id.toString() === ticketId.toString());
-                return { success: true, ticket };
-            }
-            return { success: false, message: 'Ticket not found' };
-        } catch (error) {
-            console.error('Get ticket by ID error:', error);
-            return { success: false, message: 'Failed to fetch ticket' };
-        }
+        return this._fetch(`/tickets/${ticketId}`, { headers: this._headers() });
     },
 
-    // Get statistics
+    async createTicket(title, description, priority = 'Medium', category = 'General',
+                       customerName = '', email = '', mobile = '') {
+        return this._fetch('/tickets', {
+            method: 'POST',
+            headers: this._headers(),
+            body: JSON.stringify({ title, description, priority, category,
+                                   customerName, email, mobile })
+        });
+    },
+
+    async updateTicketStatus(ticketId, status) {
+        return this._fetch(`/tickets/${ticketId}/status`, {
+            method: 'PUT',
+            headers: this._headers(),
+            body: JSON.stringify({ status })
+        });
+    },
+
+    async assignTicket(ticketId, staffUsername) {
+        return this._fetch(`/tickets/${ticketId}/assign`, {
+            method: 'PUT',
+            headers: this._headers(),
+            body: JSON.stringify({ staffUsername })
+        });
+    },
+
+    /* ── Stats & Queue ────────────────────────────────────────── */
     async getStatistics() {
-        try {
-            const response = await fetch(`${this.baseURL}/stats`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.getToken()}`
-                }
-            });
-            return await response.json();
-        } catch (error) {
-            console.error('Get stats error:', error);
-            return { success: false, message: 'Failed to fetch statistics' };
-        }
+        return this._fetch('/stats', { headers: this._headers() });
+    },
+
+    async getQueue() {
+        return this._fetch('/queue', { headers: this._headers() });
     }
 };
 
-// Make API available globally
 window.API = API;

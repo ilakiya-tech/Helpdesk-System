@@ -310,18 +310,12 @@
 
     async function loadTicketDetails(id) {
       try {
-        const result = await API.getTickets();
-        
-        if (result.success) {
-          const ticket = result.tickets.find(t => t.id.toString() === id);
-          
-          if (ticket) {
-            displayTicketDetails(ticket);
-          } else {
-            showError('Ticket not found');
-          }
+        const result = await API.getTicketById(id);
+
+        if (result.success && result.ticket) {
+          displayTicketDetails(result.ticket);
         } else {
-          showError('Failed to load ticket details');
+          showError(result.message || 'Ticket not found');
         }
       } catch (error) {
         console.error('Error loading ticket:', error);
