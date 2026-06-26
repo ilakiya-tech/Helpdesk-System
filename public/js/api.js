@@ -2,7 +2,7 @@
 // Talks directly to the C backend on port 9090
 
 const API = {
-    baseURL: 'http://localhost:9090/api',
+    baseURL: '/api',
 
     getToken()    { return localStorage.getItem('token'); },
     getUsername() { return localStorage.getItem('username'); },
