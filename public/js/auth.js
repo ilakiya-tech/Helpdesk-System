@@ -1,46 +1,30 @@
-// auth.js - Simple Authentication Handler
+// auth.js – Shared frontend auth helper (used by all pages)
 
-// Check if user is logged in
-function isAuthenticated() {
-    return !!localStorage.getItem('token');
-}
-
-// Get current user info
-function getCurrentUser() {
-    return {
-        username: localStorage.getItem('username'),
-        role: localStorage.getItem('userRole'),
-        token: localStorage.getItem('token')
-    };
-}
-
-// Check authentication and redirect if needed
-function requireAuth() {
-    if (!isAuthenticated()) {
-        window.location.href = 'index.html';
-        return false;
-    }
-    return true;
-}
-
-// Check if user has required role
-function requireRole(allowedRoles) {
-    if (!requireAuth()) return false;
-    
-    const user = getCurrentUser();
-    if (!allowedRoles.includes(user.role)) {
-        alert('Access denied. Insufficient permissions.');
-        window.location.href = 'index.html';
-        return false;
-    }
-    
-    return true;
-}
-
-// Logout function
 function logout() {
-    if (confirm("Are you sure you want to logout?")) {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
+  if (confirm('Are you sure you want to logout?')) {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+}
+
+function requireAuth(allowedRoles) {
+  const token = localStorage.getItem('token');
+  const role  = localStorage.getItem('userRole');
+  if (!token) { window.location.href = 'index.html'; return false; }
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    alert('Access denied. Redirecting...');
+    window.location.href = 'index.html';
+    return false;
+  }
+  return true;
+}
+
+function getStoredUser() {
+  return {
+    token:    localStorage.getItem('token'),
+    username: localStorage.getItem('username'),
+    role:     localStorage.getItem('userRole'),
+    userId:   localStorage.getItem('userId'),
+    name:     localStorage.getItem('name') || localStorage.getItem('username'),
+  };
 }

@@ -1,31 +1,8 @@
-# Dependencies
 node_modules/
-npm-debug.log*
-
-# Environment variables
 .env
-
-# Compiled C files
-backend-c/src/*.exe
-backend-c/src/*.o
-backend-c/src/*.out
-*.dat
-
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-logs/
+uploads/
+server.log
 *.log
-
-# Test files
-test/
-coverage/
+backend-c/src/helpdesk.exe
+backend-c/src/*.exe
+.DS_Store

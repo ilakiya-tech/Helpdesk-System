@@ -1,249 +1,229 @@
-# Carbochem Helpdesk Ticketing System
+# Carbochem Helpdesk System
 
-A full-stack helpdesk ticketing system built for Carbochem, featuring a high-performance **C backend** powered by advanced data structures, a **Node.js** static file server, and a clean multi-role HTML/JS frontend.
+A full-stack helpdesk ticketing system built with Node.js, MongoDB, and a C backend for high-performance data structures.
 
----
-
-## Features
-
-- **Multi-role authentication** — Admin, Field Staff, and Consumer dashboards
-- **JWT-based auth** — Secure login with role-based access control
-- **Ticket lifecycle management** — Create, view, update status, and assign tickets
-- **Priority queue** — Critical tickets surface first using a max-heap
-- **Admin analytics** — Stats on total, open, and critical tickets
-- **User registration** — New users can self-register
-- **LRU Cache** — Fast repeated ticket lookups
-- **Trie-based autocomplete** — Username search in O(k) time
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| C Backend API | C (GCC via MSYS2/MinGW), raw sockets, port 9090 |
-| Frontend Server | Node.js + Express, port 3000 |
-| Frontend UI | Vanilla HTML, CSS, JavaScript |
-| Auth | JWT (jsonwebtoken) |
-| API Client | Fetch API (`public/js/api.js`) |
-
----
-
-## Data Structures (C Backend)
-
-The backend is built entirely in C and uses five core data structures — all implemented from scratch:
-
-| Structure | Complexity | Used For |
-|---|---|---|
-| Hash Table | O(1) avg | User store — fast login lookup |
-| AVL Tree | O(log n) | Ticket store — balanced BST for ordered access |
-| Max-Heap (Priority Queue) | O(log n) | Priority queue — critical tickets first |
-| Trie | O(k) | Username autocomplete |
-| LRU Cache | O(1) | Cache frequent ticket GET requests |
-
----
-
-## Project Structure
-
-```
-Helpdesk-System/
-├── backend-c/
-│   ├── src/
-│   │   ├── helpdesk.c        # Entire C backend (single file)
-│   │   ├── helpdesk.exe      # Compiled binary (Windows)
-│   │   ├── full_test.sh      # 22-test suite
-│   │   ├── test_server.sh    # Server test runner
-│   │   └── compile_log.txt
-│   └── build.bat             # Windows build script
-├── public/
-│   ├── html/
-│   │   ├── index.html        # Login page
-│   │   ├── admin.html        # Admin dashboard
-│   │   ├── admin-report.html # Admin analytics/reports
-│   │   ├── staff.html        # Field staff dashboard
-│   │   ├── client.html       # Consumer dashboard
-│   │   ├── create-ticket.html
-│   │   ├── ticket-details.html
-│   │   └── register.html
-│   └── js/
-│       ├── api.js            # API client (points to C backend)
-│       └── auth.js           # Auth helpers / JWT handling
-├── api/
-│   └── routes/
-│       ├── index.js          # Legacy Node.js routes (reference)
-│       └── mock_data.js      # Seed data reference
-├── frontend/
-│   └── src/js/
-│       └── api_client.js     # Frontend API client (alt)
-├── server.js                 # Node.js static file server (port 3000)
-├── package.json
-├── .env
-└── README.md
-```
-
----
-
-## API Endpoints (C Backend — Port 9090)
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| POST | `/api/auth` | Login — returns JWT | No |
-| POST | `/api/register` | Register new user | No |
-| GET | `/api/tickets` | Get all tickets | Yes |
-| POST | `/api/tickets` | Create a new ticket | Yes |
-| GET | `/api/tickets/:id` | Get ticket by ID | Yes |
-| PUT | `/api/tickets/:id/status` | Update ticket status | Yes |
-| PUT | `/api/tickets/:id/assign` | Assign ticket to staff | Yes |
-| GET | `/api/mytickets` | Get tickets for logged-in client | Yes |
-| GET | `/api/assigned` | Get tickets assigned to logged-in staff | Yes |
-| GET | `/api/stats` | Get dashboard stats | Yes |
-| GET | `/api/queue` | Get priority queue (sorted by severity) | Yes |
-
----
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js 18+
+- MongoDB Community Server (local) **or** MongoDB Atlas (cloud)
+- MSYS2 + GCC (for C backend)
 
-- [Node.js](https://nodejs.org/) (v16+)
-- [MSYS2 / MinGW GCC](https://www.msys2.org/) (for compiling the C backend on Windows)
-
-### 1. Clone the Repository
-
+### 1. Clone & Install
 ```bash
 git clone https://github.com/ilakiya-tech/Helpdesk-System.git
 cd Helpdesk-System
-```
-
-### 2. Install Node.js Dependencies
-
-```bash
 npm install
 ```
 
-### 3. Compile the C Backend (Windows)
+### 2. Configure Environment
+Edit `.env`:
+```env
+PORT=3000
+MONGO_URI=mongodb://127.0.0.1:27017/helpdesk
+JWT_SECRET=carbochem_helpdesk_jwt_secret_2025
 
+# Optional: Email OTP (leave blank to get OTPs in console)
+# EMAIL_USER=your_email@gmail.com
+# EMAIL_PASS=your_gmail_app_password
+```
+
+### 3. Start MongoDB
 ```bash
-cd backend-c/src
-C:\msys64\mingw64\bin\gcc.exe -v -o helpdesk.exe helpdesk.c -lws2_32 2>&1
+# Windows (run as Administrator once)
+net start MongoDB
+# OR
+mongod --dbpath C:\data\db
 ```
 
-Or run the build script:
-
+### 4. Seed Database
 ```bash
-cd backend-c
-build.bat
+node api/seed.js
 ```
 
-### 4. Start the C Backend (Port 9090)
-
-```bash
-C:\msys64\usr\bin\bash.exe -l -c "cd /c/Users/Dell/Helpdesk-System/backend-c/src && ./helpdesk.exe"
-```
-
-You should see:
-
-```
-Carbochem Helpdesk System  –  C Backend
-==========================================
-Data structures:
-  Hash Table   O(1)      : 3 users
-  AVL Tree     O(log n)  : 4 tickets
-  Priority Q   O(log n)  : max-heap
-  Trie         O(k)      : username autocomplete
-  LRU Cache    O(1)      : cap=50
-API routes on http://localhost:9090
-Listening on port 9090 ...
-```
-
-### 5. Start the Frontend Server (Port 3000)
-
-Open a **new terminal**:
-
+### 5. Start Server
 ```bash
 node server.js
+# OR
+npm start
 ```
 
-### 6. Open the App
-
-Visit: [http://localhost:3000](http://localhost:3000)
+Open: **http://localhost:3000**
 
 ---
 
-## Default Login Credentials
+## 🔐 Login Credentials
 
 | Role | Username | Password |
-|---|---|---|
+|------|----------|----------|
 | Admin | `admin` | `admin123` |
-| Field Staff | `staff` | `staff123` |
-| Consumer | `client` | `client123` |
+| Admin | `manager` | `admin123` |
+| Staff (Network) | `ravi` | `staff123` |
+| Staff (Hardware) | `priya` | `staff123` |
+| Staff (Software) | `amit` | `staff123` |
+| Staff (Quality) | `sunita` | `staff123` |
+| Staff (Inspection) | `deepak` | `staff123` |
+| Client | `client` | `client123` |
+| Client | `staff` | `staff123` |
 
 ---
 
-## Running Tests
-
-The backend comes with a comprehensive 22-test suite:
-
-```bash
-C:\msys64\usr\bin\bash.exe -l "/c/Users/Dell/Helpdesk-System/backend-c/src/full_test.sh"
-```
-
-Expected output:
-
-```
-=== AUTH ===       5 tests
-=== TICKETS ===    9 tests
-=== FILTERS ===    2 tests
-=== STATS ===      3 tests
-=== QUEUE ===      1 test
-=== REGISTER ===   1 test
-
-RESULTS: 22 passed, 0 failed
-```
-
----
-
-## Role Capabilities
-
-### Admin
-- View all tickets and their statuses
-- Assign tickets to field staff
-- View analytics and reports (open, critical, total counts)
-- Access priority queue
-
-### Field Staff
-- View tickets assigned to them
-- Update ticket status (open → in-progress → resolved)
-
-### Consumer
-- Create new support tickets
-- View their own ticket history and status
-
----
-
-## Architecture Overview
+## 🏗️ Architecture
 
 ```
 Browser (port 3000)
-      │
-      ▼
-Node.js Express Server     ← serves static HTML/CSS/JS files
-      │
-      ▼
-public/js/api.js           ← makes fetch() calls to port 9090
-      │
-      ▼
-C Backend (port 9090)      ← handles all API logic
-      │
-      ├── Hash Table        ← user auth
-      ├── AVL Tree          ← ticket storage
-      ├── Max-Heap          ← priority queue
-      ├── Trie              ← username autocomplete
-      └── LRU Cache         ← ticket GET caching
+├── /                    → index.html (login)
+├── /admin.html          → Admin dashboard
+├── /staff.html          → Staff dashboard
+├── /client.html         → Client ticket viewer
+├── /create-ticket.html  → Create ticket form
+├── /ticket-details.html → Ticket detail view
+├── /admin-report.html   → Charts & reports
+└── /register.html       → Admin: add users
+
+Node.js API (port 3000/api/*)
+├── POST /api/auth              → Login
+├── POST /api/register          → Register user
+├── POST /api/forgot-password   → Send reset OTP
+├── POST /api/verify-otp        → Verify OTP
+├── POST /api/reset-password    → Reset password
+├── GET  /api/tickets           → All tickets
+├── POST /api/tickets           → Create + auto-assign ticket
+├── GET  /api/tickets/:id       → Get ticket
+├── PUT  /api/tickets/:id/status → Update status
+├── PUT  /api/tickets/:id/assign → Assign to staff
+├── POST /api/tickets/:id/comment → Add comment
+├── POST /api/tickets/:id/proof   → Upload photo proof
+├── GET  /api/mytickets         → Client's own tickets
+├── GET  /api/assigned          → Staff's assigned tickets
+├── GET  /api/stats             → Statistics
+├── GET  /api/admin/staff       → Staff list with workload
+├── GET  /api/admin/staff/available?category=X → Available staff
+├── POST /api/admin/staff       → Add staff
+├── PUT  /api/admin/staff/:id   → Update staff
+├── GET  /api/admin/workload    → Workload report
+├── GET  /api/admin/holidays    → Holiday list
+├── POST /api/admin/holidays    → Add holiday
+└── DELETE /api/admin/holidays/:id → Remove holiday
+
+C Backend (port 9090) — Data Structures Demo
+├── Hash Table   O(1)    → User authentication
+├── AVL Tree     O(logn) → Ticket search by ID
+├── Priority Queue O(logn) → Urgent ticket queue
+├── Trie         O(k)    → Username autocomplete
+└── LRU Cache    O(1)    → Ticket caching
 ```
 
 ---
 
-## License
+## ✨ Features
 
-MIT
+### Authentication
+- Login with username or email
+- Register with OTP email verification (optional)
+- Forgot password with OTP reset
+- JWT-based session management
+
+### Ticket System
+- Create ticket with category (Quality, Delivery, Network, Software, Hardware, Inspection, etc.)
+- **Auto-assignment**: tickets auto-assigned to staff matching the category
+- Assignment rules:
+  - No assignments on weekends
+  - No assignments on Indian public holidays
+  - Staff cannot exceed `maxTicketsPerDay` (default: 5)
+  - No more than 2 tickets in the same 1-hour slot
+- Priority levels: Critical, High, Medium, Low
+
+### Staff Features
+- View only assigned tickets
+- Update work progress: Started → In Progress → Completed → Needs Parts
+- Add comments/notes to tickets
+- Upload photo proof of completion
+- Category specialization per staff member
+
+### Admin Features
+- View all tickets with filters (status, priority, category, date, staff)
+- Assign/reassign tickets with real-time availability check
+- Staff workload dashboard
+- Reports: tickets by category, status distribution, resolution time
+- Manage staff (add, edit, deactivate, set daily limits)
+- Holiday management (add/remove Indian public holidays)
+
+### Database (MongoDB)
+- **Users**: name, email, password(hashed), role, category, maxTicketsPerDay
+- **Tickets**: title, description, status, priority, category, assignedTo, comments, photoProof
+- **Holidays**: Indian public holiday calendar 2025
+- **OTP**: email verification and password reset tokens
+
+---
+
+## 🧱 C Backend (Port 9090)
+
+The C backend demonstrates 5 data structures with real HTTP endpoints:
+
+```bash
+# Compile (MSYS2 MINGW64)
+cd backend-c/src
+gcc -O2 -o helpdesk.exe helpdesk.c -lws2_32
+
+# Run
+./helpdesk.exe
+```
+
+---
+
+## 📁 Project Structure
+```
+Helpdesk-System/
+├── api/
+│   ├── models/          # MongoDB schemas
+│   │   ├── User.js
+│   │   ├── Ticket.js
+│   │   ├── Holiday.js
+│   │   └── OTP.js
+│   ├── routes/          # Express route handlers
+│   │   ├── auth.js      # Login, register, OTP
+│   │   ├── tickets.js   # Ticket CRUD + auto-assign
+│   │   ├── admin.js     # Admin endpoints
+│   │   └── index.js
+│   ├── services/        # Business logic
+│   │   ├── autoAssign.js    # Auto-assignment engine
+│   │   ├── emailService.js  # Nodemailer OTP
+│   │   └── indianHolidays.js
+│   ├── middleware/
+│   │   └── auth.js      # JWT middleware
+│   └── seed.js          # Database seeder
+├── backend-c/src/
+│   └── helpdesk.c       # C backend (5 data structures)
+├── public/
+│   ├── html/            # 8 HTML pages (unchanged)
+│   └── js/
+│       ├── api.js       # Frontend API client
+│       └── auth.js      # Auth helpers
+├── uploads/             # Photo proofs
+├── server.js            # Express entry point
+├── .env                 # Configuration
+└── package.json
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Test login
+curl -X POST http://localhost:3000/api/auth \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+# Test create ticket (use token from above)
+curl -X POST http://localhost:3000/api/tickets \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"title":"Test","description":"Test issue","priority":"High","category":"Network"}'
+```
+
+---
+
+## 🌐 GitHub
+[https://github.com/ilakiya-tech/Helpdesk-System](https://github.com/ilakiya-tech/Helpdesk-System)
