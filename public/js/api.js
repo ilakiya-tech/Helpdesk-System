@@ -35,6 +35,30 @@ const API = {
     });
   },
 
+  async registerAdmin(data) {
+    return this._fetch('/register-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  },
+
+  async forgotPasswordByUsername(username, newPassword) {
+    return this._fetch('/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, newPassword })
+    });
+  },
+
+  async checkUsername(username) {
+    return this._fetch('/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+  },
+
   async registerUser(username, password, role, extra = {}) {
     return this._fetch('/register', {
       method: 'POST',
@@ -112,6 +136,30 @@ const API = {
   },
 
   async addComment(ticketId, text) {
+    return this._fetch(`/tickets/${ticketId}/comments`, {
+      method: 'POST',
+      headers: this._headers(),
+      body: JSON.stringify({ text })
+    });
+  },
+
+  async getComments(ticketId) {
+    return this._fetch(`/tickets/${ticketId}/comments`, { headers: this._headers() });
+  },
+
+  async getTicketHistory(ticketId) {
+    return this._fetch(`/tickets/${ticketId}/history`, { headers: this._headers() });
+  },
+
+  async assignTicketById(ticketId, staffId) {
+    return this._fetch(`/tickets/${ticketId}/assign`, {
+      method: 'PUT',
+      headers: this._headers(),
+      body: JSON.stringify({ staffId })
+    });
+  },
+
+  async addCommentLegacy(ticketId, text) {
     return this._fetch(`/tickets/${ticketId}/comment`, {
       method: 'POST',
       headers: this._headers(),
@@ -183,6 +231,77 @@ const API = {
   },
 
   async getUsers() {
+    return this._fetch('/users', { headers: this._headers() });
+  },
+
+  async createUser(data) {
+    return this._fetch('/users', {
+      method: 'POST',
+      headers: this._headers(),
+      body: JSON.stringify(data)
+    });
+  },
+
+  async updateUserStatus(userId, isActive) {
+    return this._fetch(`/users/${userId}/status`, {
+      method: 'PUT',
+      headers: this._headers(),
+      body: JSON.stringify({ isActive })
+    });
+  },
+
+  async resetUserPassword(userId, newPassword) {
+    return this._fetch(`/users/${userId}/password`, {
+      method: 'PUT',
+      headers: this._headers(),
+      body: JSON.stringify({ newPassword })
+    });
+  },
+
+  async getStaffList() {
+    return this._fetch('/staff', { headers: this._headers() });
+  },
+
+  async updateStaffAvailability(staffId, availability) {
+    return this._fetch(`/staff/${staffId}/availability`, {
+      method: 'PUT',
+      headers: this._headers(),
+      body: JSON.stringify({ availability })
+    });
+  },
+
+  async getHolidaysPublic() {
+    return this._fetch('/holidays', { headers: this._headers() });
+  },
+
+  async addHolidayPublic(date, name, type) {
+    return this._fetch('/holidays', {
+      method: 'POST',
+      headers: this._headers(),
+      body: JSON.stringify({ date, name, type })
+    });
+  },
+
+  async updateHoliday(holidayId, data) {
+    return this._fetch(`/holidays/${holidayId}`, {
+      method: 'PUT',
+      headers: this._headers(),
+      body: JSON.stringify(data)
+    });
+  },
+
+  async deleteHolidayPublic(holidayId) {
+    return this._fetch(`/holidays/${holidayId}`, {
+      method: 'DELETE',
+      headers: this._headers()
+    });
+  },
+
+  async getDashboardSummary() {
+    return this._fetch('/dashboard/summary', { headers: this._headers() });
+  },
+
+  async getUsersLegacy() {
     return this._fetch('/admin/users', { headers: this._headers() });
   }
 };

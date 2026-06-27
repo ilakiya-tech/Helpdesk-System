@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holiday Management - Carbochem Helpdesk</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #1a5f9e; --background-light: #f0f4f8; }
+        body { font-family: 'Inter', sans-serif; background: var(--background-light); margin: 0; }
+        .sidebar { background: var(--primary-color) !important; min-height: 100vh; width: 240px; }
+        .sidebar-link { color: rgba(255,255,255,0.85); text-decoration: none; display: block; padding: 0.6rem 1rem; border-radius: 6px; margin-bottom: 2px; }
+        .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.2); color: #fff; }
+        .main-content { flex: 1; padding: 1.5rem; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-day { padding: 8px; text-align: center; border-radius: 6px; background: #fff; font-size: 0.85rem; min-height: 40px; }
+        .cal-day.header { background: var(--primary-color); color: #fff; font-weight: 600; }
+        .cal-day.holiday { background: #fef3c7; font-weight: 600; color: #92400e; }
+        @media (max-width:768px) { .layout-row { flex-direction: column !important; } .sidebar { width: 100% !important; } }
+    </style>
+</head>
+<body>
+<div class="d-flex layout-row">
+    <aside class="sidebar p-3 text-white" id="sidebar-container"></aside>
+    <main class="main-content">
+        <h2 class="mb-4">Holiday Management</h2>
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card mb-3"><div class="card-body">
+                    <h5>Add Holiday</h5>
+                    <form id="holiday-form" class="row g-2">
+                        <div class="col-12"><label class="form-label">Holiday Name</label><input type="text" class="form-control" id="h-name" required></div>
+                        <div class="col-12"><label class="form-label">Date</label><input type="date" class="form-control" id="h-date" required></div>
+                        <div class="col-12"><label class="form-label">Type</label>
+                            <select class="form-select" id="h-type"><option>Public Holiday</option><option>Company Holiday</option></select></div>
+                        <div class="col-12"><button type="submit" class="btn btn-primary">Add Holiday</button></div>
+                    </form>
+                </div></div>
+                <div class="card"><div class="card-body">
+                    <h5>Calendar View</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(-1)">←</button>
+                        <span id="cal-month-label" class="fw-semibold"></span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="changeMonth(1)">→</button>
+                    </div>
+                    <div class="cal-grid" id="cal-grid"></div>
+                </div></div>
+            </div>
+            <div class="col-lg-7">
+                <div class="card"><div class="card-body">
+                    <h5>All Holidays</h5>
+                    <table class="table table-hover"><thead><tr><th>Name</th><th>Date</th><th>Type</th><th>Actions</th></tr></thead>
+                    <tbody id="holidays-table"></tbody></table>
+                </div></div>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+if (!requireAuth(['admin'])) throw new Error('auth');
+document.getElementById('sidebar-container').innerHTML = `
+  <div class="mb-4"><strong>Carbochem</strong><br><small>Admin Portal</small></div>
+  <a href="admin.html" class="sidebar-link">📊 Dashboard</a>
+  <a href="admin-users.html" class="sidebar-link">👥 Users</a>
+  <a href="admin-staff.html" class="sidebar-link">🛠️ Staff</a>
+  <a href="admin.html#tickets" class="sidebar-link">🎫 Tickets</a>
+  <a href="admin-holidays.html" class="sidebar-link active">📅 Holidays</a>
+  <a href="admin-report.html" class="sidebar-link">📈 Reports</a>
+  <button class="btn btn-outline-light btn-sm w-100 mt-4" onclick="logout()">Logout</button>`;
+
+let holidays = [], calDate = new Date();
+
+async function loadHolidays() {
+    const r = await API.getHolidaysPublic();
+    holidays = r.holidays || [];
+    document.getElementById('holidays-table').innerHTML = holidays.map(h => `
+        <tr><td>${h.name}</td><td>${new Date(h.date).toLocaleDateString()}</td><td>${h.type}</td>
+        <td><button class="btn btn-sm btn-outline-primary" onclick="editH('${h._id}')">Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="delH('${h._id}')">Delete</button></td></tr>`).join('');
+    renderCal();
+}
+
+function renderCal() {
+    const y = calDate.getFullYear(), m = calDate.getMonth();
+    document.getElementById('cal-month-label').textContent = calDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-day header">${d}</div>`).join('');
+    const first = new Date(y, m, 1).getDay();
+    const days = new Date(y, m + 1, 0).getDate();
+    for (let i = 0; i < first; i++) grid.innerHTML += '<div class="cal-day"></div>';
+    for (let d = 1; d <= days; d++) {
+        const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const hol = holidays.find(h => h.date && h.date.startsWith(ds));
+        grid.innerHTML += `<div class="cal-day ${hol ? 'holiday' : ''}" title="${hol ? hol.name : ''}">${d}${hol ? '<br><small>🎉</small>' : ''}</div>`;
+    }
+}
+function changeMonth(d) { calDate.setMonth(calDate.getMonth() + d); renderCal(); }
+
+async function editH(id) {
+    const h = holidays.find(x => x._id === id);
+    const name = prompt('Holiday name:', h.name);
+    const date = prompt('Date (YYYY-MM-DD):', h.date.split('T')[0]);
+    if (name && date) { await API.updateHoliday(id, { name, date }); loadHolidays(); }
+}
+async function delH(id) { if (confirm('Delete this holiday?')) { await API.deleteHolidayPublic(id); loadHolidays(); } }
+
+document.getElementById('holiday-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const r = await API.addHolidayPublic(document.getElementById('h-date').value, document.getElementById('h-name').value, document.getElementById('h-type').value);
+    if (r.success) { e.target.reset(); loadHolidays(); } else alert(r.message);
+});
+loadHolidays();
+</script>
+</body>
+</html>

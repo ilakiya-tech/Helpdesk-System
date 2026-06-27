@@ -3,292 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carbochem - Helpdesk Ticket Viewer</title>
+    <title>Carbochem - Consumer Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #1a5f9e;
-            --secondary-color: #2c7cc4;
-            --background-light: #f0f4f8;
-            --text-dark: #1f2937;
-            --text-gray: #4b5563;
-            --white: #ffffff;
-            --border-color: #d1d5db;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-light);
-            color: var(--text-dark);
-        }
-
-		.navbar {
-            background-color: var(--primary-color);
-        }
-
-        .navbar .nav-link {
-            color: var(--white) !important;
-        }
-
-        .navbar .nav-link:hover {
-            color: var(--secondary-color) !important;
-        }
-		
-        .dashboard {
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 2rem;
-        }
-
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo {
-            height: 50px;
-            width: auto;
-        }
-
-        .company-name {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .filter-container {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .filter-container input,
-        .filter-container button {
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-        }
-
-        .filter-container input {
-            flex-grow: 1;
-        }
-
-        .filter-container button {
-            background-color: var(--primary-color);
-            color: var(--white);
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .filter-container button:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .ticket-table {
-            width: 100%;
-            background-color: var(--white);
-            border-radius: 0.75rem;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .ticket-table th {
-            background-color: var(--background-light);
-            color: var(--text-gray);
-            font-weight: 600;
-            padding: 1rem;
-            text-align: left;
-        }
-
-        .ticket-table td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .ticket-status {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-open { background-color: #e6f2ff; color: #1e3a8a; }
-        .status-in-progress { background-color: #dbeafe; color: #1d4ed8; }
-        .status-resolved { background-color: #ddf4e4; color: #166534; }
-
-        .view-details-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: 0.875rem;
-        }
-
-        .view-details-btn:hover {
-            background-color: var(--secondary-color);
-        }
+        :root { --primary-color: #1a5f9e; --background-light: #f0f4f8; --border-color: #d1d5db; }
+        body { font-family: 'Inter', sans-serif; background: var(--background-light); margin: 0; }
+        .sidebar { background: var(--primary-color) !important; min-height: 100vh; width: 240px; flex-shrink: 0; }
+        .sidebar-link { color: rgba(255,255,255,0.85); text-decoration: none; display: block; padding: 0.6rem 1rem; border-radius: 6px; margin-bottom: 2px; }
+        .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.2); color: #fff; }
+        .dashboard { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+        .ticket-card { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary-color); display: inline-block; margin-right: 8px; }
+        @media (max-width:768px) { .layout-row { flex-direction: column !important; } .sidebar { width: 100% !important; min-height: auto !important; } }
     </style>
 </head>
 <body>
-	 <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Consumer Dashboard</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#">View Tickets</a></li>
-                    <li class="nav-item"><a class="nav-link" href="create-ticket.html">Create Ticket</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="logout()">Logout</a></li>
-                </ul>
-            </div>
+<div class="d-flex layout-row">
+    <aside class="sidebar p-3 text-white">
+        <div class="mb-4"><strong>Carbochem</strong><br><small>Consumer Portal</small></div>
+        <a href="client.html" class="sidebar-link active">📊 Dashboard</a>
+        <a href="client.html#tickets" class="sidebar-link">🎫 My Tickets</a>
+        <a href="create-ticket.html" class="sidebar-link">➕ Raise Ticket</a>
+        <button class="btn btn-outline-light btn-sm w-100 mt-4" onclick="logout()">Logout</button>
+    </aside>
+    <div class="flex-grow-1">
+        <div class="dashboard">
+            <h2 class="mb-3">My Tickets</h2>
+            <div class="alert alert-info py-2 mb-3" id="holiday-notice">Loading holiday notice...</div>
+            <div class="mb-3"><input type="text" class="form-control" id="searchInput" placeholder="Search tickets by ID or issue..."></div>
+            <div id="tickets" class="ticket-list"></div>
         </div>
-    </nav>
-    <div class="dashboard">
-        <div class="dashboard-header">
-            <div class="logo-container">
-                <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100" height="100" fill="var(--primary-color)" />
-                    <text x="50" y="50" text-anchor="middle" dy=".3em" fill="white" font-size="40" font-weight="bold">CC</text>
-                </svg>
-                <span class="company-name">Carbochem</span>
-            </div>
-            <h1>Helpdesk Ticket Viewer</h1>
-        </div>
-
-        <div class="filter-container">
-            <input type="text" id="searchInput" placeholder="Search tickets by ID or issue...">
-            <button onclick="searchTickets()">Search</button>
-        </div>
-
-        <table class="ticket-table">
-            <thead>
-                <tr>
-                    <th>Ticket ID</th>
-                    <th>Issue Name</th>
-                    <th>Raised Date</th>
-                    <th>Status</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody id="ticketTableBody">
-                <!-- Ticket rows will be populated from API -->
-            </tbody>
-        </table>
     </div>
+</div>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+if (!localStorage.getItem('token') || localStorage.getItem('userRole') !== 'client') {
+    window.location.href = 'index.html';
+}
 
-    <script src="../js/api.js"></script>
-    <script src="../js/auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Check authentication
-        if (!localStorage.getItem('token')) {
-            window.location.href = 'index.html';
-        }
+const priorityDays = { High: 1, Critical: 1, Medium: 3, Low: 7 };
+let allTickets = [];
 
-        let allTickets = [];
-        
-        // Load user's tickets
-        async function loadTickets() {
-            try {
-                const result = await API.getTickets();
-                if (result.success) {
-                    // Filter tickets for current user (consumers only see their own tickets)
-                    const username = localStorage.getItem('username');
-                    allTickets = result.tickets.filter(ticket => 
-                        ticket.createdBy === username || ticket.customerName === username
-                    );
-                    displayTickets(allTickets);
-                }
-            } catch (error) {
-                console.error('Failed to load tickets:', error);
-            }
-        }
+async function loadTickets() {
+    const r = await API.getMyTickets();
+    if (r.success) {
+        allTickets = r.tickets;
+        renderTickets(allTickets);
+    }
+}
 
-        // Display tickets in the table
-        function displayTickets(ticketList) {
-            const tableBody = document.getElementById('ticketTableBody');
-            tableBody.innerHTML = '';
-            
-            if (ticketList.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No tickets found</td></tr>';
-                return;
-            }
-            
-            ticketList.forEach(ticket => {
-                const statusClass = ticket.status.toLowerCase().replace(' ', '-');
-                const row = document.createElement('tr');
-                
-                row.innerHTML = `
-                    <td>#${ticket.id}</td>
-                    <td>${ticket.title}</td>
-                    <td>${formatDate(ticket.createdAt)}</td>
-                    <td><span class="ticket-status status-${statusClass}">${ticket.status}</span></td>
-                    <td><button class="view-details-btn" onclick="viewTicketDetails('${ticket.id}')">View Details</button></td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-        }
-        
-        // Format date
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-        }
-        
-        // Search tickets
-        function searchTickets() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            const filteredTickets = allTickets.filter(ticket => {
-                return ticket.id.toString().includes(searchTerm) ||
-                       ticket.title.toLowerCase().includes(searchTerm);
-            });
-            
-            displayTickets(filteredTickets);
-        }
-        
-        // View ticket details
-        function viewTicketDetails(ticketId) {
-            window.location.href = `ticket-details.html?id=${ticketId}`;
-        }
-        
-        // Logout function
-        function logout() {
-            if (confirm("Are you sure you want to logout?")) {
-                localStorage.clear();
-                window.location.href = "index.html";
-            }
-        }
-        
-        // Initialize the page
-        loadTickets();
-    </script>
+async function loadHolidayNotice() {
+    const r = await API.getHolidaysPublic();
+    const now = new Date();
+    const upcoming = (r.holidays || []).filter(h => new Date(h.date) >= now).slice(0, 2);
+    document.getElementById('holiday-notice').innerHTML = upcoming.length
+        ? '📅 <strong>Upcoming holidays:</strong> ' + upcoming.map(h => `${h.name} (${new Date(h.date).toLocaleDateString()})`).join(', ')
+        : 'No upcoming holidays in the calendar.';
+}
+
+async function renderTickets(tickets) {
+    const el = document.getElementById('tickets');
+    if (!tickets.length) { el.innerHTML = '<p class="text-muted">No tickets found. <a href="create-ticket.html">Raise a ticket</a></p>'; return; }
+
+    el.innerHTML = await Promise.all(tickets.map(async t => {
+        const days = priorityDays[t.priority] || 3;
+        const hr = await API.getTicketHistory(t._id || t.id);
+        const history = (hr.history || []).slice(-5);
+        return `<div class="ticket-card">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div><strong>#${t.id}</strong> – ${t.title}<br>
+                <span class="badge bg-primary">${t.status}</span> <span class="badge bg-secondary">${t.priority}</span>
+                <small class="text-muted ms-2">Est. resolution: ${days} day${days>1?'s':''}</small></div>
+                <button class="btn btn-sm btn-outline-primary" onclick="location.href='ticket-details.html?id=${t._id || t.id}'">View Details</button>
+            </div>
+            <div class="mt-2 small"><strong>Timeline:</strong></div>
+            <div class="ms-2 mt-1">${history.length ? history.map(h =>
+                `<div class="small"><span class="timeline-dot"></span>${h.action.replace(/_/g,' ')} – ${h.changedByName || 'System'} <em class="text-muted">${new Date(h.createdAt).toLocaleString()}</em></div>`
+            ).join('') : '<small class="text-muted">No activity yet</small>'}</div>
+            <form class="mt-2 comment-form" data-id="${t._id || t.id}">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" placeholder="Add a comment..." required>
+                    <button class="btn btn-primary">Send</button>
+                </div>
+            </form>
+        </div>`;
+    })).then(html => html.join(''));
+
+    document.querySelectorAll('.comment-form').forEach(form => {
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const text = form.querySelector('input').value;
+            const r = await API.addComment(form.dataset.id, text);
+            if (r.success) { form.querySelector('input').value = ''; loadTickets(); }
+        });
+    });
+}
+
+document.getElementById('searchInput').addEventListener('input', e => {
+    const term = e.target.value.toLowerCase();
+    renderTickets(allTickets.filter(t => t.id.toString().includes(term) || t.title.toLowerCase().includes(term)));
+});
+
+loadHolidayNotice();
+loadTickets();
+</script>
 </body>
 </html>

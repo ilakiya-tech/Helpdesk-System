@@ -205,11 +205,35 @@
         .view-details-btn:hover {
             background-color: var(--secondary-color);
         }
+
+        .sidebar { background: var(--primary-color) !important; min-height: 100vh; width: 240px; flex-shrink: 0; }
+        .sidebar-link { color: rgba(255,255,255,0.85); text-decoration: none; display: block; padding: 0.6rem 1rem; border-radius: 6px; margin-bottom: 2px; }
+        .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.2); color: #fff; }
+        .summary-card { background: var(--white); border-radius: 0.75rem; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+        .summary-card h3 { font-size: 2rem; color: var(--primary-color); margin: 0; }
+        .summary-card p { color: var(--text-gray); margin: 0.25rem 0 0; font-size: 0.9rem; }
+        .quick-links a { text-decoration: none; }
+        .badge-unassigned { position: relative; }
+        .badge-unassigned .badge { position: absolute; top: -8px; right: -12px; font-size: 0.65rem; }
+        @media (max-width:768px) { .layout-row { flex-direction: column !important; } .sidebar { width: 100% !important; min-height: auto !important; } }
     </style>
 </head>
 <body>
+<div class="d-flex layout-row">
+    <aside class="sidebar p-3 text-white" id="sidebar-container">
+        <div class="mb-4"><strong>Carbochem</strong><br><small>Admin Portal</small></div>
+        <a href="admin.html" class="sidebar-link active">📊 Dashboard</a>
+        <a href="admin-users.html" class="sidebar-link">👥 Users</a>
+        <a href="admin-staff.html" class="sidebar-link">🛠️ Staff</a>
+        <a href="admin.html#tickets" class="sidebar-link badge-unassigned">🎫 Tickets <span class="badge bg-danger" id="unassigned-badge" style="display:none">0</span></a>
+        <a href="admin-holidays.html" class="sidebar-link">📅 Holidays</a>
+        <a href="admin-report.html" class="sidebar-link">📈 Reports</a>
+        <a href="register.html" class="sidebar-link">➕ Register (Legacy)</a>
+        <button class="btn btn-outline-light btn-sm w-100 mt-4" onclick="logout()">Logout</button>
+    </aside>
+    <div class="flex-grow-1">
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark d-none">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
 			<svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -233,7 +257,7 @@
         </div>
     </nav>
     
-    <div class="dashboard">
+    <div class="dashboard" id="tickets">
         <div class="dashboard-header">
             <div class="logo-container">
                 <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -243,6 +267,22 @@
                 <span class="company-name">Carbochem</span>
             </div>
         </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3"><div class="summary-card"><h3 id="stat-users">-</h3><p>Total Users</p></div></div>
+            <div class="col-6 col-md-3"><div class="summary-card"><h3 id="stat-staff">-</h3><p>Total Staff</p></div></div>
+            <div class="col-6 col-md-3"><div class="summary-card"><h3 id="stat-open">-</h3><p>Open Tickets</p></div></div>
+            <div class="col-6 col-md-3"><div class="summary-card"><h3 id="stat-holidays">-</h3><p>Holidays This Month</p></div></div>
+        </div>
+
+        <div class="row g-2 mb-4 quick-links">
+            <div class="col-auto"><a href="admin-users.html" class="btn btn-outline-primary btn-sm">User Management</a></div>
+            <div class="col-auto"><a href="admin-staff.html" class="btn btn-outline-primary btn-sm">Staff Management</a></div>
+            <div class="col-auto"><a href="admin-holidays.html" class="btn btn-outline-primary btn-sm">Holiday Management</a></div>
+            <div class="col-auto"><a href="admin-report.html" class="btn btn-outline-primary btn-sm">Reports</a></div>
+        </div>
+
+        <div class="card mb-3"><div class="card-body py-2"><h6 class="mb-2">Upcoming Holidays</h6><div id="upcoming-holidays" class="small text-muted">Loading...</div></div></div>
 		<div class="filter-container">
             <input type="text" id="search-ticket" placeholder="Search by Ticket ID" oninput="filterTickets()">
             <select id="status-filter" onchange="filterTickets()">
@@ -279,6 +319,8 @@
             </tbody>
         </table>
     </div>
+    </div>
+</div>
 
     <!-- Toast notification container -->
     <div class="toast-container" id="toastContainer"></div>
@@ -288,18 +330,52 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Check authentication
-        if (!localStorage.getItem('token')) {
+        if (!localStorage.getItem('token') || localStorage.getItem('userRole') !== 'admin') {
             window.location.href = 'index.html';
         }
 
-        // Current sort state
+        let staffList = [];
         let currentSortColumn = -1;
         let sortDirection = 1;
         let allTickets = [];
+
+        async function loadSummary() {
+            try {
+                const r = await API.getDashboardSummary();
+                if (r.success) {
+                    document.getElementById('stat-users').textContent = r.summary.totalUsers;
+                    document.getElementById('stat-staff').textContent = r.summary.totalStaff;
+                    document.getElementById('stat-open').textContent = r.summary.openTickets;
+                    document.getElementById('stat-holidays').textContent = r.summary.holidaysThisMonth;
+                    const badge = document.getElementById('unassigned-badge');
+                    if (r.summary.unassignedTickets > 0) {
+                        badge.textContent = r.summary.unassignedTickets;
+                        badge.style.display = 'inline';
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadStaffDropdown() {
+            const r = await API.getStaffList();
+            if (r.success) staffList = r.staff.filter(s => s.availability === 'available');
+        }
+
+        async function loadUpcomingHolidays() {
+            const r = await API.getHolidaysPublic();
+            if (r.success) {
+                const now = new Date();
+                const upcoming = (r.holidays || []).filter(h => new Date(h.date) >= now).slice(0, 3);
+                document.getElementById('upcoming-holidays').innerHTML = upcoming.length
+                    ? upcoming.map(h => `<span class="badge bg-warning text-dark me-1">${new Date(h.date).toLocaleDateString()} – ${h.name}</span>`).join('')
+                    : 'No upcoming holidays';
+            }
+        }
         
         // Load tickets on page load
         async function loadTickets() {
             try {
+                await loadStaffDropdown();
                 const result = await API.getTickets();
                 if (result.success) {
                     allTickets = result.tickets;
@@ -309,6 +385,10 @@
                 console.error('Failed to load tickets:', error);
                 showToast('Failed to load tickets', 'error');
             }
+        }
+
+        function staffOptions() {
+            return staffList.map(s => `<option value="${s.userId}">${s.name} (${s.department || s.category || 'Staff'})</option>`).join('');
         }
 
         // Render tickets in table
@@ -334,14 +414,14 @@
                     <td>${new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
                     <td>
                         ${ticket.assignedTo ? ticket.assignedTo : `
-                            <select class="staff-dropdown">
+                            <select class="staff-dropdown" data-ticket-id="${ticket._id || ticket.id}">
                                 <option value="">Select Staff</option>
-                                <option value="staff">Staff (Field Agent)</option>
+                                ${staffOptions()}
                             </select>
                         `}
                     </td>
                     <td>
-                        ${ticket.assignedTo ? 'Assigned' : `<button class="assign-btn" onclick="assignPerson(this, '${ticket.id}')">Assign</button>`}
+                        ${ticket.assignedTo ? 'Assigned' : `<button class="assign-btn" onclick="assignPerson(this, '${ticket._id || ticket.id}')">Assign</button>`}
                     </td>
                     <td><button class="view-details-btn" onclick="viewTicketDetails('${ticket.id}')">View Details</button></td>
                 `;
@@ -359,19 +439,20 @@
         async function assignPerson(button, ticketId) {
             const row = button.closest('tr');
             const staffSelect = row.querySelector('.staff-dropdown');
-            const staffName = staffSelect.options[staffSelect.selectedIndex].text;
+            const staffId = staffSelect.value;
             
-            if (!staffSelect.value) {
+            if (!staffId) {
                 showToast("Please select a staff member", "error");
                 return;
             }
             
             try {
-                const result = await API.assignTicket(ticketId, staffName);
+                const result = await API.assignTicketById(ticketId, staffId);
                 if (result.success) {
-                    showToast(`Ticket #${ticketId} assigned to ${staffName}`, "success");
-                    loadTickets(); // Reload tickets
-                }
+                    showToast(`Ticket assigned to ${result.ticket.assignedTo}`, "success");
+                    loadTickets();
+                    loadSummary();
+                } else showToast(result.message || "Assignment failed", "error");
             } catch (error) {
                 showToast("Assignment failed", "error");
             }
@@ -449,6 +530,8 @@
         }
 
         // Load tickets when page loads
+        loadSummary();
+        loadUpcomingHolidays();
         loadTickets();
     </script>
 </body>

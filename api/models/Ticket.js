@@ -7,6 +7,16 @@ const commentSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+const historySchema = new mongoose.Schema({
+  action:        { type: String, required: true },
+  changedBy:     { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  changedByName: { type: String, default: '' },
+  field:         { type: String, default: '' },
+  oldValue:      { type: String, default: '' },
+  newValue:      { type: String, default: '' },
+  createdAt:     { type: Date, default: Date.now }
+});
+
 const ticketSchema = new mongoose.Schema({
   title:        { type: String, required: true, trim: true },
   description:  { type: String, required: true },
@@ -21,6 +31,8 @@ const ticketSchema = new mongoose.Schema({
   email:        { type: String, default: '' },
   mobile:       { type: String, default: '' },
   comments:     [commentSchema],
+  history:      { type: [historySchema], default: [] },
+  assignedAt:   { type: Date, default: null },
   photoProof:   { type: String, default: '' }, // file path
   attachment:   { type: String, default: '' }, // client attachment
   dueDate:      { type: Date },

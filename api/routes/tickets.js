@@ -9,6 +9,7 @@ const Ticket  = require('../models/Ticket');
 const User    = require('../models/User');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { autoAssign } = require('../services/autoAssign');
+const { addTicketHistory } = require('../services/ticketHistory');
 
 // ── Multer setup (photo proofs) ────────────────────────────────────────────
 const uploadDir = path.join(__dirname, '../../uploads');
@@ -30,6 +31,8 @@ function formatTicket(t) {
     assignedTo:   obj.assignedToName || null,
     createdBy:    obj.createdByName  || obj.createdBy,
     createdAt:    obj.createdAt,
+    updatedAt:    obj.updatedAt,
+    assignedAt:   obj.assignedAt,
     dueDate:      obj.dueDate,
   };
 }
@@ -42,8 +45,7 @@ router.get('/tickets', authenticateToken, async (req, res) => {
       // clients see their own tickets
       query = { createdBy: req.user.userId };
     } else if (req.user.role === 'staff') {
-      // staff see all tickets (filter client-side as existing UI does)
-      query = {};
+      query = { assignedTo: req.user.userId };
     }
 
     // Optional filters
@@ -124,16 +126,30 @@ router.post('/tickets', authenticateToken, upload.single('attachment'), async (r
       attachment:   req.file ? `/uploads/${req.file.filename}` : '',
     };
 
-    // Attempt auto-assignment
-    const assignedStaff = await autoAssign({ category: ticketData.category });
-    if (assignedStaff) {
-      ticketData.assignedTo     = assignedStaff._id;
-      ticketData.assignedToName = assignedStaff.name || assignedStaff.username;
-      ticketData.status         = 'In Progress';
-      ticketData.autoAssigned   = true;
+    // Auto-assignment only when explicitly enabled
+    if (process.env.AUTO_ASSIGN === 'true') {
+      const assignedStaff = await autoAssign({ category: ticketData.category });
+      if (assignedStaff) {
+        ticketData.assignedTo     = assignedStaff._id;
+        ticketData.assignedToName = assignedStaff.name || assignedStaff.username;
+        ticketData.status         = 'In Progress';
+        ticketData.autoAssigned   = true;
+        ticketData.assignedAt     = new Date();
+      }
     }
 
-    const ticket = await Ticket.create(ticketData);
+    const ticket = await Ticket.create({
+      ...ticketData,
+      history: [{
+        action: 'created',
+        changedBy: req.user.userId,
+        changedByName: creator?.name || req.user.username,
+        field: 'status',
+        newValue: 'Open',
+      }]
+    });
+
+    const assignedStaff = ticket.assignedTo ? { name: ticket.assignedToName } : null;
 
     res.json({
       success: true,
@@ -157,8 +173,19 @@ router.put('/tickets/:id/status', authenticateToken, async (req, res) => {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
 
+    const user = await User.findById(req.user.userId);
+    const oldStatus = ticket.status;
     ticket.status = status;
     if (status === 'Resolved' || status === 'Closed') ticket.resolvedAt = new Date();
+
+    await addTicketHistory(ticket, {
+      action: 'status_changed',
+      userId: req.user.userId,
+      userName: user?.name || req.user.username,
+      field: 'status',
+      oldValue: oldStatus,
+      newValue: status,
+    });
     await ticket.save();
 
     res.json({ success: true, ticket: formatTicket(ticket), message: 'Status updated' });
@@ -201,9 +228,21 @@ router.put('/tickets/:id/assign', authenticateToken, requireRole('admin'), async
       });
     }
 
+    const oldAssignee = ticket.assignedToName || 'Unassigned';
     ticket.assignedTo     = staff._id;
     ticket.assignedToName = staff.name || staff.username;
+    ticket.assignedAt     = new Date();
     if (ticket.status === 'Open') ticket.status = 'In Progress';
+
+    const admin = await User.findById(req.user.userId);
+    await addTicketHistory(ticket, {
+      action: 'assigned',
+      userId: req.user.userId,
+      userName: admin?.name || req.user.username,
+      field: 'assignedTo',
+      oldValue: oldAssignee,
+      newValue: ticket.assignedToName,
+    });
     await ticket.save();
 
     res.json({ success: true, ticket: formatTicket(ticket), message: `Ticket assigned to ${ticket.assignedToName}` });
@@ -226,6 +265,13 @@ router.post('/tickets/:id/comment', authenticateToken, async (req, res) => {
       author:     req.user.userId,
       authorName: user?.name || req.user.username,
       text,
+    });
+    await addTicketHistory(ticket, {
+      action: 'comment_added',
+      userId: req.user.userId,
+      userName: user?.name || req.user.username,
+      field: 'comment',
+      newValue: text.slice(0, 100),
     });
     await ticket.save();
 

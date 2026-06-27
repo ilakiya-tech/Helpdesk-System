@@ -20,17 +20,17 @@ async function seedDatabase() {
     { name:'Manager',      username:'manager',    email:'manager@carbochem.com',    password:'admin123',  role:'admin' },
     { name:'Supervisor',   username:'supervisor', email:'supervisor@carbochem.com', password:'admin123',  role:'admin' },
     // Staff (one per category)
-    { name:'Ravi Kumar',   username:'ravi',   email:'ravi@carbochem.com',   password:'staff123', role:'staff', category:'Network',    maxTicketsPerDay:5 },
-    { name:'Priya Singh',  username:'priya',  email:'priya@carbochem.com',  password:'staff123', role:'staff', category:'Hardware',   maxTicketsPerDay:5 },
-    { name:'Amit Sharma',  username:'amit',   email:'amit@carbochem.com',   password:'staff123', role:'staff', category:'Software',   maxTicketsPerDay:5 },
-    { name:'Sunita Patil', username:'sunita', email:'sunita@carbochem.com', password:'staff123', role:'staff', category:'Quality',    maxTicketsPerDay:5 },
-    { name:'Deepak Nair',  username:'deepak', email:'deepak@carbochem.com', password:'staff123', role:'staff', category:'Inspection', maxTicketsPerDay:5 },
+    { name:'Ravi Kumar',   username:'ravi',   email:'ravi@carbochem.com',   password:'staff123', role:'staff', category:'Network',    department:'Network',    phone:'9876500101', availability:'available', maxTicketsPerDay:5 },
+    { name:'Priya Singh',  username:'priya',  email:'priya@carbochem.com',  password:'staff123', role:'staff', category:'Hardware',   department:'Hardware',   phone:'9876500102', availability:'busy', maxTicketsPerDay:5 },
+    { name:'Amit Sharma',  username:'amit',   email:'amit@carbochem.com',   password:'staff123', role:'staff', category:'Software',   department:'Software',   phone:'9876500103', availability:'available', maxTicketsPerDay:5 },
+    { name:'Sunita Patil', username:'sunita', email:'sunita@carbochem.com', password:'staff123', role:'staff', category:'Quality',    department:'Quality',    phone:'9876500104', availability:'available', maxTicketsPerDay:5 },
+    { name:'Deepak Nair',  username:'deepak', email:'deepak@carbochem.com', password:'staff123', role:'staff', category:'Inspection', department:'Inspection', phone:'9876500105', availability:'on_leave', maxTicketsPerDay:5 },
     // Backward-compat staff username
-    { name:'Field Staff',  username:'staff',  email:'staff@carbochem.com',  password:'staff123', role:'staff', category:'Quality',    maxTicketsPerDay:5 },
+    { name:'Field Staff',  username:'staff',  email:'staff@carbochem.com',  password:'staff123', role:'staff', category:'Quality',    department:'Quality',    phone:'9876500106', availability:'available', maxTicketsPerDay:5 },
     // Clients
-    { name:'John Doe',    username:'client',  email:'client@carbochem.com',  password:'client123', role:'client' },
-    { name:'Jane Smith',  username:'jane',    email:'jane@carbochem.com',    password:'client123', role:'client' },
-    { name:'Bob Johnson', username:'bob',     email:'bob@carbochem.com',     password:'client123', role:'client' },
+    { name:'John Doe',    username:'client',  email:'client@carbochem.com',  password:'client123', role:'client', department:'Consumer', phone:'9876500201' },
+    { name:'Jane Smith',  username:'jane',    email:'jane@carbochem.com',    password:'client123', role:'client', department:'Consumer', phone:'9876500202' },
+    { name:'Bob Johnson', username:'bob',     email:'bob@carbochem.com',     password:'client123', role:'client', department:'Consumer', phone:'9876500203' },
   ];
 
   const saved = {};

@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema({
   email:    { type: String, required: true, unique: true, trim: true, lowercase: true },
   password: { type: String, required: true },
   phone:    { type: String, default: '' },
+  department: { type: String, default: '' },
+  availability: { type: String, enum: ['available', 'on_leave', 'busy'], default: 'available' },
   role:     { type: String, enum: ['admin', 'staff', 'client'], default: 'client' },
   category: { type: String, default: '' }, // staff specialization
   maxTicketsPerDay: { type: Number, default: 5 },
@@ -28,11 +30,13 @@ userSchema.methods.comparePassword = function (plain) {
 // Return safe user object (no password)
 userSchema.methods.toSafeObject = function () {
   return {
-    userId: this._id,
+    userId: this._id.toString(),
     username: this.username,
     name: this.name,
     email: this.email,
     phone: this.phone,
+    department: this.department,
+    availability: this.availability,
     role: this.role,
     category: this.category,
     maxTicketsPerDay: this.maxTicketsPerDay,

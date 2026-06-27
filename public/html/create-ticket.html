@@ -191,14 +191,12 @@
   </style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="navbar-content">
-      <div class="navbar-brand">
-        <div class="logo-image">CC</div>
-        <span class="brand-name">Carbochem Helpdesk</span>
-      </div>
-      <div class="user-info">
-        <span>Consumer Dashboard</span>
+  <nav class="navbar navbar-dark" style="background: linear-gradient(45deg, #1a5f9e, #2c7cc4);">
+    <div class="container-fluid">
+      <a href="client.html" class="navbar-brand text-white text-decoration-none">← Dashboard</a>
+      <div>
+        <a href="client.html" class="text-white text-decoration-none me-3 small">My Tickets</a>
+        <a href="create-ticket.html" class="text-white text-decoration-none small fw-bold">Raise Ticket</a>
       </div>
     </div>
   </nav>
@@ -289,8 +287,8 @@
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
   <script>
-    // Check authentication
-    if (!localStorage.getItem('token')) {
+    // Check authentication – consumers only
+    if (!localStorage.getItem('token') || localStorage.getItem('userRole') !== 'client') {
       window.location.href = 'index.html';
     }
 

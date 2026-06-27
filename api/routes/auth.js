@@ -50,6 +50,43 @@ router.post('/auth', async (req, res) => {
   }
 });
 
+// ── POST /api/register-admin – Register admin with secret key ───────────────
+router.post('/register-admin', async (req, res) => {
+  try {
+    const { username, name, email, password, secretKey } = req.body;
+    const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'CARBOCHEM2024';
+
+    if (!username || !password || !name)
+      return res.status(400).json({ success: false, message: 'name, username, password required' });
+    if (secretKey !== ADMIN_SECRET)
+      return res.status(403).json({ success: false, message: 'Invalid secret key' });
+
+    const exists = await User.findOne({
+      $or: [{ username: username.toLowerCase() }, { email: (email || '').toLowerCase() }]
+    });
+    if (exists)
+      return res.status(400).json({ success: false, message: 'Username or email already exists' });
+
+    const user = await User.create({
+      name,
+      username: username.toLowerCase(),
+      email: (email || `${username}@carbochem.com`).toLowerCase(),
+      password,
+      role: 'admin',
+      department: 'Administration',
+      isVerified: true,
+    });
+
+    res.status(201).json({
+      success: true,
+      user: user.toSafeObject(),
+      message: 'Admin account created successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── POST /api/register – Register new user (admin creates staff/client) ────
 // Also allows self-registration for clients (OTP optional)
 router.post('/register', async (req, res) => {
@@ -120,13 +157,33 @@ router.post('/verify-otp', async (req, res) => {
 });
 
 // ── POST /api/forgot-password ─────────────────────────────────────────────
+// Supports: (1) username + newPassword – simple reset, (2) username only – verify user exists,
+// (3) email – legacy OTP flow
 router.post('/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: 'Email required' });
+    const { email, username, newPassword } = req.body;
+
+    // Simple username-based reset (no OTP)
+    if (username) {
+      const user = await User.findOne({ username: username.toLowerCase() });
+      if (!user)
+        return res.status(404).json({ success: false, message: 'Username not found' });
+
+      if (!newPassword)
+        return res.json({ success: true, message: 'User found. You may set a new password.', found: true });
+
+      if (newPassword.length < 6)
+        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+
+      user.password = newPassword;
+      await user.save();
+      return res.json({ success: true, message: 'Password reset successfully' });
+    }
+
+    // Legacy email OTP flow
+    if (!email) return res.status(400).json({ success: false, message: 'Username or email required' });
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    // Always return success to prevent email enumeration
     if (!user) return res.json({ success: true, message: 'If that email exists, OTP has been sent' });
 
     const otp = generateOTP();

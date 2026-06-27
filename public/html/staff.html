@@ -175,10 +175,24 @@
                 flex-direction: column;
             }
         }
+
+        .sidebar { background: var(--primary-color) !important; min-height: 100vh; width: 240px; flex-shrink: 0; }
+        .sidebar-link { color: rgba(255,255,255,0.85); text-decoration: none; display: block; padding: 0.6rem 1rem; border-radius: 6px; margin-bottom: 2px; }
+        .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.2); color: #fff; }
+        @media (max-width:768px) { .layout-row { flex-direction: column !important; } .sidebar { width: 100% !important; min-height: auto !important; } }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+<div class="d-flex layout-row">
+    <aside class="sidebar p-3 text-white">
+        <div class="mb-4"><strong>Carbochem</strong><br><small>Staff Portal</small></div>
+        <a href="staff.html" class="sidebar-link active">📊 Dashboard</a>
+        <a href="staff.html#tickets" class="sidebar-link">🎫 My Tickets</a>
+        <a href="staff.html#availability" class="sidebar-link">🏖️ Leave Status</a>
+        <button class="btn btn-outline-light btn-sm w-100 mt-4" onclick="logout()">Logout</button>
+    </aside>
+    <div class="flex-grow-1">
+    <nav class="navbar navbar-expand-lg navbar-dark d-none">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -211,14 +225,23 @@
             <h1>Field Staff Ticket Dashboard</h1>
         </div>
 
-        <div class="ticket-filters">
-            <select id="status-filter">
-                <option value="">All Statuses</option>
-                <option value="open">Open</option>
-                <option value="in-progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-            </select>
-            <input type="text" id="search-input" placeholder="Search tickets...">
+        <div class="card mb-3" id="availability"><div class="card-body py-2">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <strong>My Availability:</strong>
+                <select class="form-select form-select-sm" style="max-width:180px" id="avail-select">
+                    <option value="available">Available</option>
+                    <option value="on_leave">On Leave</option>
+                    <option value="busy">Busy</option>
+                </select>
+                <span id="avail-status" class="badge bg-success">Available</span>
+            </div>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body py-2"><h6 class="mb-1">Upcoming Holidays</h6><div id="upcoming-holidays" class="small text-muted">Loading...</div></div></div>
+
+        <div class="ticket-filters mb-3" id="tickets">
+            <select id="status-filter" class="form-select"><option value="">All Statuses</option><option value="open">Open</option><option value="in-progress">In Progress</option><option value="resolved">Resolved</option></select>
+            <input type="text" id="search-input" class="form-control" placeholder="Search tickets...">
         </div>
 
         <table class="ticket-table" id="ticket-table">
@@ -238,28 +261,59 @@
             </tbody>
         </table>
     </div>
+    </div>
+</div>
 
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Check authentication
-        if (!localStorage.getItem('token')) {
+        if (!localStorage.getItem('token') || localStorage.getItem('userRole') !== 'staff') {
             window.location.href = 'index.html';
         }
 
         let allTickets = [];
 
+        async function loadAvailability() {
+            const r = await API.getStaffList();
+            const me = (r.staff || []).find(s => s.username === localStorage.getItem('username'));
+            if (me) {
+                document.getElementById('avail-select').value = me.availability || 'available';
+                updateAvailBadge(me.availability);
+            }
+        }
+
+        function updateAvailBadge(a) {
+            const el = document.getElementById('avail-status');
+            const map = { available: ['Available','bg-success'], on_leave: ['On Leave','bg-warning text-dark'], busy: ['Busy','bg-danger'] };
+            const [t,c] = map[a] || map.available;
+            el.textContent = t; el.className = 'badge ' + c;
+        }
+
+        document.getElementById('avail-select').addEventListener('change', async e => {
+            const uid = localStorage.getItem('userId');
+            if (uid) {
+                await API.updateStaffAvailability(uid, e.target.value);
+                updateAvailBadge(e.target.value);
+            }
+        });
+
+        async function loadHolidays() {
+            const r = await API.getHolidaysPublic();
+            const now = new Date();
+            const upcoming = (r.holidays || []).filter(h => new Date(h.date) >= now).slice(0, 3);
+            document.getElementById('upcoming-holidays').innerHTML = upcoming.length
+                ? upcoming.map(h => `<span class="badge bg-warning text-dark me-1">${new Date(h.date).toLocaleDateString()} – ${h.name}</span>`).join('')
+                : 'No upcoming holidays';
+        }
+
         // Load assigned tickets for this staff member
         async function loadTickets() {
             try {
-                const result = await API.getTickets();
+                const result = await API.getAssigned();
                 if (result.success) {
-                    const username = localStorage.getItem('username');
-                    // Staff see tickets assigned to them
-                    allTickets = result.tickets.filter(ticket => 
-                        ticket.assignedTo === username
-                    );
+                    allTickets = result.tickets;
                     renderTickets(allTickets);
                 }
             } catch (error) {
@@ -330,15 +384,12 @@
         function viewTicketDetails(ticketId) {
             window.location.href = `ticket-details.html?id=${ticketId}`;
         }
-        
-        function logout() {
-            if (confirm("Are you sure you want to logout?")) {
-                localStorage.clear();
-                window.location.href = "index.html";
-            }
-        }
+
+        // logout() provided by auth.js
 
         // Initial load
+        loadAvailability();
+        loadHolidays();
         loadTickets();
     </script>
 </body>

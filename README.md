@@ -1,229 +1,202 @@
 # Carbochem Helpdesk System
 
-A full-stack helpdesk ticketing system built with Node.js, MongoDB, and a C backend for high-performance data structures.
+A full-stack helpdesk ticketing system built with Node.js, Express, MongoDB, and Bootstrap 5.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
 - MongoDB Community Server (local) **or** MongoDB Atlas (cloud)
-- MSYS2 + GCC (for C backend)
 
-### 1. Clone & Install
+### Install & Run
 ```bash
 git clone https://github.com/ilakiya-tech/Helpdesk-System.git
-cd Helpdesk-System
+cd HelpDesk-System
 npm install
-```
-
-### 2. Configure Environment
-Edit `.env`:
-```env
-PORT=3000
-MONGO_URI=mongodb://127.0.0.1:27017/helpdesk
-JWT_SECRET=carbochem_helpdesk_jwt_secret_2025
-
-# Optional: Email OTP (leave blank to get OTPs in console)
-# EMAIL_USER=your_email@gmail.com
-# EMAIL_PASS=your_gmail_app_password
-```
-
-### 3. Start MongoDB
-```bash
-# Windows (run as Administrator once)
-net start MongoDB
-# OR
-mongod --dbpath C:\data\db
-```
-
-### 4. Seed Database
-```bash
-node api/seed.js
-```
-
-### 5. Start Server
-```bash
+cp .env.example .env
+node api/seed.js   # seed local MongoDB (optional if using in-memory fallback)
 node server.js
-# OR
-npm start
 ```
 
-Open: **http://localhost:3000**
+Open **http://localhost:3000**
+
+If MongoDB is not running, the server automatically falls back to an in-memory database and auto-seeds.
 
 ---
 
-## 🔐 Login Credentials
+## Login Credentials
 
 | Role | Username | Password |
 |------|----------|----------|
 | Admin | `admin` | `admin123` |
 | Admin | `manager` | `admin123` |
-| Staff (Network) | `ravi` | `staff123` |
-| Staff (Hardware) | `priya` | `staff123` |
-| Staff (Software) | `amit` | `staff123` |
-| Staff (Quality) | `sunita` | `staff123` |
-| Staff (Inspection) | `deepak` | `staff123` |
-| Client | `client` | `client123` |
-| Client | `staff` | `staff123` |
+| Staff | `ravi`, `priya`, `amit`, `sunita`, `deepak`, `staff` | `staff123` |
+| Consumer | `client`, `jane`, `bob` | `client123` |
+
+**Admin Sign Up:** Use the "Admin Sign Up" tab on the login page with secret key `CARBOCHEM2024`.
+
+**Forgot Password:** Click "Forgot Password?" on login — enter username, then set a new password (no OTP required).
 
 ---
 
-## 🏗️ Architecture
-
-```
-Browser (port 3000)
-├── /                    → index.html (login)
-├── /admin.html          → Admin dashboard
-├── /staff.html          → Staff dashboard
-├── /client.html         → Client ticket viewer
-├── /create-ticket.html  → Create ticket form
-├── /ticket-details.html → Ticket detail view
-├── /admin-report.html   → Charts & reports
-└── /register.html       → Admin: add users
-
-Node.js API (port 3000/api/*)
-├── POST /api/auth              → Login
-├── POST /api/register          → Register user
-├── POST /api/forgot-password   → Send reset OTP
-├── POST /api/verify-otp        → Verify OTP
-├── POST /api/reset-password    → Reset password
-├── GET  /api/tickets           → All tickets
-├── POST /api/tickets           → Create + auto-assign ticket
-├── GET  /api/tickets/:id       → Get ticket
-├── PUT  /api/tickets/:id/status → Update status
-├── PUT  /api/tickets/:id/assign → Assign to staff
-├── POST /api/tickets/:id/comment → Add comment
-├── POST /api/tickets/:id/proof   → Upload photo proof
-├── GET  /api/mytickets         → Client's own tickets
-├── GET  /api/assigned          → Staff's assigned tickets
-├── GET  /api/stats             → Statistics
-├── GET  /api/admin/staff       → Staff list with workload
-├── GET  /api/admin/staff/available?category=X → Available staff
-├── POST /api/admin/staff       → Add staff
-├── PUT  /api/admin/staff/:id   → Update staff
-├── GET  /api/admin/workload    → Workload report
-├── GET  /api/admin/holidays    → Holiday list
-├── POST /api/admin/holidays    → Add holiday
-└── DELETE /api/admin/holidays/:id → Remove holiday
-
-C Backend (port 9090) — Data Structures Demo
-├── Hash Table   O(1)    → User authentication
-├── AVL Tree     O(logn) → Ticket search by ID
-├── Priority Queue O(logn) → Urgent ticket queue
-├── Trie         O(k)    → Username autocomplete
-└── LRU Cache    O(1)    → Ticket caching
-```
-
----
-
-## ✨ Features
+## Features
 
 ### Authentication
-- Login with username or email
-- Register with OTP email verification (optional)
-- Forgot password with OTP reset
-- JWT-based session management
+- Login with username (Admin / Field Staff / Consumer tabs)
+- Admin self-registration with secret key validation
+- Simple username-based password reset
+- Legacy email OTP flow still supported via `/api/forgot-password` with email
+- JWT session management
+
+### Admin Dashboard (`/admin.html`)
+- Summary cards: Total Users, Total Staff, Open Tickets, Holidays This Month
+- Unassigned ticket notification badge
+- Quick links to User, Staff, Holiday, and Report management
+- Ticket table with staff assignment dropdown
+- Upcoming holidays widget
+
+### User Management (`/admin-users.html`)
+- Create Staff or Consumer accounts
+- View all users in a table
+- Activate/deactivate accounts
+- Reset user passwords
+
+### Staff Management (`/admin-staff.html`)
+- View all field staff with availability and workload
+- Set availability: Available, On Leave, Busy
+- View tickets per staff member
+- Reassign tickets between staff
+
+### Holiday Management (`/admin-holidays.html`)
+- Add/edit/delete holidays (Public Holiday / Company Holiday)
+- Table and calendar views
+- Holiday warning on tickets with due dates on holidays
 
 ### Ticket System
-- Create ticket with category (Quality, Delivery, Network, Software, Hardware, Inspection, etc.)
-- **Auto-assignment**: tickets auto-assigned to staff matching the category
-- Assignment rules:
-  - No assignments on weekends
-  - No assignments on Indian public holidays
-  - Staff cannot exceed `maxTicketsPerDay` (default: 5)
-  - No more than 2 tickets in the same 1-hour slot
-- Priority levels: Critical, High, Medium, Low
+- Consumers raise tickets (appear as **Unassigned** until admin assigns)
+- Admin assigns tickets to available staff
+- Full ticket detail: ID, title, description, category, priority, status, raised by, assigned to, dates
+- Audit trail for every status change and assignment
+- Comments/notes by staff, admin, and consumers
+- Estimated resolution: High/Critical 1 day, Medium 3 days, Low 7 days
 
-### Staff Features
-- View only assigned tickets
-- Update work progress: Started → In Progress → Completed → Needs Parts
-- Add comments/notes to tickets
-- Upload photo proof of completion
-- Category specialization per staff member
+### Staff Dashboard (`/staff.html`)
+- Only assigned tickets shown
+- Update ticket status (Open → In Progress → Resolved → Closed)
+- Availability self-service
+- Upcoming holidays widget
 
-### Admin Features
-- View all tickets with filters (status, priority, category, date, staff)
-- Assign/reassign tickets with real-time availability check
-- Staff workload dashboard
-- Reports: tickets by category, status distribution, resolution time
-- Manage staff (add, edit, deactivate, set daily limits)
-- Holiday management (add/remove Indian public holidays)
-
-### Database (MongoDB)
-- **Users**: name, email, password(hashed), role, category, maxTicketsPerDay
-- **Tickets**: title, description, status, priority, category, assignedTo, comments, photoProof
-- **Holidays**: Indian public holiday calendar 2025
-- **OTP**: email verification and password reset tokens
+### Consumer Dashboard (`/client.html`)
+- Ticket history with status timeline
+- Add comments on own tickets
+- Estimated resolution time by priority
+- Upcoming holidays notice
 
 ---
 
-## 🧱 C Backend (Port 9090)
+## API Routes
 
-The C backend demonstrates 5 data structures with real HTTP endpoints:
+### Auth
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/auth` | Login |
+| POST | `/api/register-admin` | Register admin (secret key required) |
+| POST | `/api/register` | Register user (admin) |
+| POST | `/api/forgot-password` | Reset by username or email OTP |
+| POST | `/api/verify-otp` | Verify OTP |
+| POST | `/api/reset-password` | Reset with OTP |
 
-```bash
-# Compile (MSYS2 MINGW64)
-cd backend-c/src
-gcc -O2 -o helpdesk.exe helpdesk.c -lws2_32
+### Users & Staff
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/users` | Admin creates user |
+| GET | `/api/users` | List all users (admin) |
+| PUT | `/api/users/:id/status` | Activate/deactivate |
+| PUT | `/api/users/:id/password` | Reset password |
+| GET | `/api/staff` | List staff with workload |
+| PUT | `/api/staff/:id/availability` | Update availability |
 
-# Run
-./helpdesk.exe
-```
+### Holidays
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/holidays` | List holidays |
+| POST | `/api/holidays` | Add holiday (admin) |
+| PUT | `/api/holidays/:id` | Edit holiday (admin) |
+| DELETE | `/api/holidays/:id` | Delete holiday (admin) |
+
+### Tickets
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/tickets` | List tickets (role-filtered) |
+| POST | `/api/tickets` | Create ticket |
+| GET | `/api/tickets/:id` | Get ticket |
+| PUT | `/api/tickets/:id/status` | Update status |
+| PUT | `/api/tickets/:id/assign` | Assign to staff (admin) |
+| GET | `/api/tickets/:id/history` | Audit trail |
+| GET | `/api/tickets/:id/comments` | Get comments |
+| POST | `/api/tickets/:id/comments` | Add comment |
+| GET | `/api/mytickets` | Client's tickets |
+| GET | `/api/assigned` | Staff's assigned tickets |
+| GET | `/api/dashboard/summary` | Admin dashboard stats |
+
+Legacy routes (`/api/admin/*`, `/api/tickets/:id/comment`) remain available.
 
 ---
 
-## 📁 Project Structure
+## Screenshots (Description)
+
+1. **Login Page** — Role tabs (Admin/Staff/Consumer), Login/Admin Sign Up toggle, Forgot Password flow
+2. **Admin Dashboard** — Summary cards, ticket table with assignment, sidebar navigation
+3. **User Management** — Create user form and user table with status actions
+4. **Staff Management** — Staff availability, ticket reassignment
+5. **Holiday Management** — Calendar + table views
+6. **Ticket Details** — Full metadata, audit trail, comments section
+7. **Staff Dashboard** — Assigned tickets, availability selector, holidays widget
+8. **Consumer Dashboard** — Ticket cards with timeline and inline comments
+
+---
+
+## Deployment (Render.com)
+
+1. Push repo to GitHub
+2. Create a **MongoDB Atlas** free cluster and copy the connection string
+3. On [Render.com](https://render.com), create a **Web Service** from repo
+4. Use the included `render.yaml` or set:
+   - **Build:** `npm install`
+   - **Start:** `npm start`
+   - **Env vars:** `MONGO_URI`, `JWT_SECRET`, `ADMIN_SECRET_KEY`
+5. Deploy — Render assigns a public URL
+
+---
+
+## Project Structure
+
 ```
 Helpdesk-System/
 ├── api/
-│   ├── models/          # MongoDB schemas
-│   │   ├── User.js
-│   │   ├── Ticket.js
-│   │   ├── Holiday.js
-│   │   └── OTP.js
-│   ├── routes/          # Express route handlers
-│   │   ├── auth.js      # Login, register, OTP
-│   │   ├── tickets.js   # Ticket CRUD + auto-assign
-│   │   ├── admin.js     # Admin endpoints
-│   │   └── index.js
-│   ├── services/        # Business logic
-│   │   ├── autoAssign.js    # Auto-assignment engine
-│   │   ├── emailService.js  # Nodemailer OTP
-│   │   └── indianHolidays.js
-│   ├── middleware/
-│   │   └── auth.js      # JWT middleware
-│   └── seed.js          # Database seeder
-├── backend-c/src/
-│   └── helpdesk.c       # C backend (5 data structures)
+│   ├── models/          User, Ticket, Holiday, OTP
+│   ├── routes/          auth, tickets, admin, features, mock_data
+│   ├── services/        autoAssign, emailService, ticketHistory
+│   └── middleware/      JWT auth
 ├── public/
-│   ├── html/            # 8 HTML pages (unchanged)
-│   └── js/
-│       ├── api.js       # Frontend API client
-│       └── auth.js      # Auth helpers
-├── uploads/             # Photo proofs
-├── server.js            # Express entry point
-├── .env                 # Configuration
+│   ├── html/            All dashboard pages
+│   └── js/              api.js, auth.js, sidebar.js
+├── server.js
+├── render.yaml
+├── .env.example
 └── package.json
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
-# Test login
-curl -X POST http://localhost:3000/api/auth \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
-
-# Test create ticket (use token from above)
-curl -X POST http://localhost:3000/api/tickets \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <TOKEN>" \
-  -d '{"title":"Test","description":"Test issue","priority":"High","category":"Network"}'
+node server.js &
+node test_api.js
 ```
 
 ---
 
-## 🌐 GitHub
+## GitHub
 [https://github.com/ilakiya-tech/Helpdesk-System](https://github.com/ilakiya-tech/Helpdesk-System)

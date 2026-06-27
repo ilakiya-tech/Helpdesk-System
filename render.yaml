@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: carbochem-helpdesk
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_SECRET_KEY
+        value: CARBOCHEM2024
+      - key: MONGO_URI
+        sync: false
+    healthCheckPath: /

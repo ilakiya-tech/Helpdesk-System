@@ -60,7 +60,7 @@ async function run() {
   // Create ticket - should auto-assign to Ravi (Network category)
   r = await post('/tickets', { title: 'WiFi Down in Office', description: 'Cannot connect to WiFi on 2nd floor', priority: 'High', category: 'Network', customerName: 'Test User', email: 'test@test.com', mobile: '9876543210' }, clientTok);
   check('create ticket', r.success, r);
-  check('auto-assigned to staff', r.message && r.message.includes('assigned'), r);
+  check('ticket created unassigned by default', !r.ticket?.assignedToName, r);
   const newId = r.ticket?._id;
 
   r = await get('/tickets/' + newId, adminTok);
@@ -92,14 +92,14 @@ async function run() {
   r = await get('/admin/holidays', adminTok);
   check('holidays list', r.success && r.holidays.length >= 10, r);
 
-  r = await post('/admin/holidays', { date: '2025-12-31', name: 'New Year Eve', type: 'optional' }, adminTok);
+  r = await post('/admin/holidays', { date: '2099-12-31', name: 'Test Holiday', type: 'optional' }, adminTok);
   check('add holiday', r.success, r);
 
   r = await get('/admin/staff/available?category=Network', adminTok);
   check('available staff by category', r.success, r);
 
-  // Add new staff member
-  r = await post('/admin/staff', { username: 'newtechstaff', name: 'New Tech', password: 'staff123', category: 'Hardware' }, adminTok);
+  const uniq = Date.now();
+  r = await post('/admin/staff', { username: 'newtech' + uniq, name: 'New Tech', password: 'staff123', category: 'Hardware' }, adminTok);
   check('add new staff', r.success, r);
 
   // Assign ticket
@@ -107,11 +107,29 @@ async function run() {
   check('assign ticket', r.success, r);
 
   console.log('\n=== REGISTER / OTP ===');
-  r = await post('/register', { username: 'newclient', password: 'client123', role: 'client', name: 'New Client' }, adminTok);
+  r = await post('/register', { username: 'newclient' + uniq, password: 'client123', role: 'client', name: 'New Client' }, adminTok);
   check('register new client', r.success, r);
 
-  r = await post('/forgot-password', { email: 'admin@carbochem.com' });
-  check('forgot password', r.success, r);
+  r = await post('/forgot-password', { username: 'admin', newPassword: 'admin123' });
+  check('forgot password by username', r.success, r);
+
+  r = await get('/users', adminTok);
+  check('get users (new route)', r.success && Array.isArray(r.users), r);
+
+  r = await get('/staff', adminTok);
+  check('get staff (new route)', r.success && Array.isArray(r.staff), r);
+
+  r = await get('/holidays', adminTok);
+  check('get holidays (new route)', r.success, r);
+
+  r = await get('/dashboard/summary', adminTok);
+  check('dashboard summary', r.success && r.summary, r);
+
+  r = await get('/tickets/' + newId + '/history', adminTok);
+  check('ticket history', r.success, r);
+
+  r = await get('/tickets/' + newId + '/comments', adminTok);
+  check('ticket comments', r.success, r);
 
   console.log('\n==========================================');
   console.log(`  RESULTS: ${pass} passed, ${fail} failed`);
